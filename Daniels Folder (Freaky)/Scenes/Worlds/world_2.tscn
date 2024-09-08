@@ -8,6 +8,11 @@ size = Vector2(40, 40)
 [node name="World 2" type="Node2D"]
 
 [node name="Player 2" parent="." instance=ExtResource("1_0grm8")]
+jump_height = 100.0
+time_to_peak = 0.5
+time_to_descent = 0.4
+coyote_frames = 10
+buffer_frames = 10
 
 [node name="Camera2D" type="Camera2D" parent="Player 2"]
 
