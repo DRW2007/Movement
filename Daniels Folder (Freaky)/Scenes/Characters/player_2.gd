@@ -27,6 +27,11 @@ var action_key : String = ""
 
 @onready var downwards_gravity : float = (2.0 * jump_height)/(time_to_descent*time_to_descent)
 
+
+var direction = 0
+var jump_held : bool = false
+var facing_right : bool = true
+
 func _ready():
 	if player_index == -1:
 		print("OH GOD OH NO PLEASE")
@@ -53,25 +58,14 @@ func _physics_process(delta):
 		coyote_timer -= 1
 		velocity += Vector2(0,1) * (get_current_gravity() * delta)
 	
-	#Sets jump buffer for jump handling
-	if Input.is_action_just_pressed("jump" + action_key):
-		jump_buffer_timer = buffer_frames
-	
-	#Shorthop 
-	if Input.is_action_just_released("jump" + action_key) && velocity.y < 0:
-		velocity.y *= shorthop_percentage
-	
 	#Handle Jump
 	if can_jump() && jump_buffer_timer > 0:
 		velocity.y = jump_velocity
 		coyote_timer = 0
 		
 		#Handle shorthop with input buffer
-		if not Input.is_action_pressed("jump" + action_key):
+		if not jump_held:
 			velocity.y *= shorthop_percentage
-
-	var direction = Input.get_axis("move_left" + action_key, "move_right" + action_key)
-	
 	if direction:
 		#If the player is holding left
 		if direction < 0:
@@ -98,12 +92,45 @@ func _physics_process(delta):
 	#If the player is NOT holding left or right, slow them down by ACCELERATION/2
 	else:
 		velocity.x = move_toward(velocity.x, 0, get_acceleration()/2)
+	print(scale)
 	
-
 	move_and_slide()
 
 func _input(event):
-	print(event.device)
+	#Doesnt read inputs for other devices. Second statement lets the device 0 controller go through
+	if event.device != player_index and player_index != -2:
+		return
+	
+	#Sets jump buffer for jump handling
+	if Input.is_action_just_pressed("jump" + action_key):
+		jump_held = true
+		jump_buffer_timer = buffer_frames
+	
+	#Shorthop 
+	if Input.is_action_just_released("jump" + action_key):
+		jump_held = false
+		if velocity.y < 0:
+			velocity.y *= shorthop_percentage
+	
+	direction = Input.get_axis("move_left" + action_key, "move_right" + action_key)
+	
+	if direction > 0 and not facing_right:
+		print(" right")
+		facing_right = true
+		scale = Vector2(-1,1)
+	elif direction < 0 and facing_right:
+		print(" left")
+		facing_right = false
+		scale = Vector2(-1,1)
+	
+	if Input.is_action_just_pressed("light_attack" + action_key):
+		print("Attack " + str(player_index))
+		for body in $Area2D.get_overlapping_bodies():
+			if body is CharacterBody2D and body != self:
+				body.velocity = Vector2(100 ,-1.0 * (body.upwards_gravity * body.time_to_peak))
+				print(body)
+	
+	#print("Device " + str(event.device) + " sent from " + action_key)
 
 func get_current_gravity():
 	if velocity.y < 0:
