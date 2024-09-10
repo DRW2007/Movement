@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="CharacterStatsResource" load_steps=2 format=3 uid="uid://cuwlm2gfabv1c"]
+
+[ext_resource type="Script" path="res://Daniels Folder (Freaky)/Assets/Resources/Scripts/CharacterStats.gd" id="1_3tbah"]
+
+[resource]
+script = ExtResource("1_3tbah")
+max_speed = 300.0
+ground_acceleration = 50.0
+air_acceleration = 20.0
+jump_height = 100.0
+time_to_peak = 0.5
+time_to_descent = 0.4
+shorthop_percentage = 0.3
+coyote_frames = 10
+buffer_frames = 10

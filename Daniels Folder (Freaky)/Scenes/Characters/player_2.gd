@@ -1,17 +1,22 @@
 extends CharacterBody2D
 
-@export_group("Movement Variables")
-@export var max_speed : float
-@export var acceleration : float
+var player_index : int = -1
+var action_key : String = ""
+##The CharacterStatsResource that determines the movement, jump, and buffer variables for the player
+@export var csr : CharacterStatsResource 
 
-@export_group("Jump Variables")
-@export var jump_height : float
-@export var time_to_peak : float
-@export var time_to_descent : float
+@onready var max_speed := csr.max_speed
+@onready var ground_acceleration := csr.ground_acceleration
+@onready var air_acceleration := csr.air_acceleration
 
-@export_group("Frame Timers")
-@export var coyote_frames : int
-@export var buffer_frames : int
+@onready var jump_height := csr.jump_height
+@onready var time_to_peak := csr.time_to_peak
+@onready var time_to_descent := csr.time_to_descent
+
+@onready var shorthop_percentage = csr.shorthop_percentage
+
+@onready var coyote_frames = csr.coyote_frames
+@onready var buffer_frames = csr.buffer_frames
 
 @onready var coyote_timer : int = 0
 @onready var jump_buffer_timer : int = 0
@@ -22,8 +27,19 @@ extends CharacterBody2D
 
 @onready var downwards_gravity : float = (2.0 * jump_height)/(time_to_descent*time_to_descent)
 
-const SPEED = 300.0
-
+func _ready():
+	if player_index == -1:
+		print("OH GOD OH NO PLEASE")
+	elif player_index == 0:
+		action_key = "KB"
+		print("Keyboard Connected!")
+	elif player_index == -2:
+		action_key = "0"
+		print("Controller 0 Connected!")
+	else:
+		action_key = "_joy"
+		print("Controller " + str(player_index) + " connected (not 0)")
+	
 
 func _physics_process(delta):
 	#Decriment buffer
@@ -37,26 +53,57 @@ func _physics_process(delta):
 		coyote_timer -= 1
 		velocity += Vector2(0,1) * (get_current_gravity() * delta)
 	
-	# Handle jump.
-	if Input.is_action_just_pressed("jumpKB"):
+	#Sets jump buffer for jump handling
+	if Input.is_action_just_pressed("jump" + action_key):
 		jump_buffer_timer = buffer_frames
 	
-	if Input.is_action_just_released("jumpKB") && velocity.y < 0:
-		velocity.y *= 0.3
+	#Shorthop 
+	if Input.is_action_just_released("jump" + action_key) && velocity.y < 0:
+		velocity.y *= shorthop_percentage
 	
+	#Handle Jump
 	if can_jump() && jump_buffer_timer > 0:
 		velocity.y = jump_velocity
 		coyote_timer = 0
+		
+		#Handle shorthop with input buffer
+		if not Input.is_action_pressed("jump" + action_key):
+			velocity.y *= shorthop_percentage
 
-	var direction = Input.get_axis("move_leftKB", "move_rightKB")
+	var direction = Input.get_axis("move_left" + action_key, "move_right" + action_key)
+	
 	if direction:
-		velocity.x = direction * SPEED
+		#If the player is holding left
+		if direction < 0:
+			#If the Velocity and direction are opposite ways
+			if velocity.x * direction < 0:
+				velocity.x += get_acceleration() * direction * 2
+			#If the velocity is less than the max speed in that direction, speed them up to the max speed
+			elif velocity.x > -1 * max_speed:
+				velocity.x = max(velocity.x + (get_acceleration() * direction), -1 * max_speed)
+			#If the velocity is more than the max speed in that direction, slow them down less
+			else:
+				velocity.x = move_toward(velocity.x, 0, get_friction() * get_acceleration()/4)
+		#If the player is holding right
+		if direction > 0:
+			#If the Velocity and direction are opposite ways
+			if velocity.x * direction < 0:
+				velocity.x += get_acceleration() * direction * 2
+			#If the velocity is less than the max speed in that direction, speed them up to the max speed
+			elif velocity.x < max_speed:
+				velocity.x = min(velocity.x + (get_acceleration() * direction), max_speed)
+			#If the velocity is more than the max speed in that direction, slow them down less
+			else:
+				velocity.x = move_toward(velocity.x, 0, get_friction() * get_acceleration()/4)
+	#If the player is NOT holding left or right, slow them down by ACCELERATION/2
 	else:
-		velocity.x = move_toward(velocity.x, 0, SPEED)
+		velocity.x = move_toward(velocity.x, 0, get_acceleration()/2)
+	
 
 	move_and_slide()
 
-
+func _input(event):
+	print(event.device)
 
 func get_current_gravity():
 	if velocity.y < 0:
@@ -64,7 +111,9 @@ func get_current_gravity():
 	return downwards_gravity
 
 func get_acceleration():
-	return
+	if is_on_floor():
+		return ground_acceleration
+	return air_acceleration
 
 func get_friction():
 	if is_on_floor():
