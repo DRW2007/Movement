@@ -8,6 +8,9 @@ var controller_player_0_spawned = false
 var controller_player_0 = null
 func _input(event):
 	
+	if Input.is_action_just_pressed("ui_down"):
+		add_child(player_scene.instantiate())
+	
 	if Input.is_action_just_pressed("jumpKB") and not keyboard_spawned:
 		keyboard_spawned = true
 		keyboard_player = player_scene.instantiate()

@@ -1,17 +1,106 @@
-[gd_scene load_steps=5 format=3 uid="uid://b0ejh5phapt0k"]
+[gd_scene load_steps=13 format=3 uid="uid://b0ejh5phapt0k"]
 
 [ext_resource type="Script" path="res://Daniels Folder (Freaky)/Scenes/Characters/player_2.gd" id="1_urs1e"]
 [ext_resource type="Resource" uid="uid://cuwlm2gfabv1c" path="res://Daniels Folder (Freaky)/Assets/Resources/Instances/BaseCharacter.tres" id="2_5ddpq"]
+[ext_resource type="Texture2D" uid="uid://fmis0tyy12ls" path="res://Daniels Folder (Freaky)/Assets/Sprites/New Piskel (6).png" id="3_kqwjx"]
+[ext_resource type="PackedScene" uid="uid://cohsfrdahoabq" path="res://Daniels Folder (Freaky)/Assets/Components/Scenes/HurtboxComponent.tscn" id="4_3mqb0"]
+[ext_resource type="PackedScene" uid="uid://b1m4aki8oiubh" path="res://Daniels Folder (Freaky)/Assets/Components/Scenes/KnockbackComponent.tscn" id="5_2y1ww"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_ibecc"]
 
+[sub_resource type="Animation" id="Animation_54qwe"]
+resource_name = "idle"
+length = 0.01
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Sprite2D:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [0]
+}
+
+[sub_resource type="Animation" id="Animation_hcu5q"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Sprite2D:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [0]
+}
+
+[sub_resource type="Animation" id="Animation_fhn7t"]
+resource_name = "light_attack"
+length = 1.375
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Sprite2D:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.133333, 0.233333, 0.366667, 0.5, 0.633333, 0.733333, 0.866667, 1, 1.13333, 1.23333),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 1,
+"values": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+}
+tracks/1/type = "method"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath(".")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0.5, 0.633333, 0.733333, 0.866667),
+"transitions": PackedFloat32Array(1, 1, 1, 1),
+"values": [{
+"args": [],
+"method": &"active_frames"
+}, {
+"args": [],
+"method": &"active_frames"
+}, {
+"args": [],
+"method": &"active_frames"
+}, {
+"args": [],
+"method": &"clear_blacklist"
+}]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_jea5y"]
+_data = {
+"RESET": SubResource("Animation_hcu5q"),
+"idle": SubResource("Animation_54qwe"),
+"light_attack": SubResource("Animation_fhn7t")
+}
+
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_ftn34"]
 size = Vector2(41, 20)
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_hkab7"]
 
 [node name="Player 2" type="CharacterBody2D"]
 collision_layer = 2
 script = ExtResource("1_urs1e")
 csr = ExtResource("2_5ddpq")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture_filter = 1
+position = Vector2(0, -31)
+texture = ExtResource("3_kqwjx")
+hframes = 4
+vframes = 4
 
 [node name="Polygon2D" type="Polygon2D" parent="."]
 polygon = PackedVector2Array(10, -6, 10, 0, 10, 6, 9, 10, 6, 13, 2, 15, -1, 15, -5, 14, -8, 11, -10, 7, -10, 1, -10, -5, -9, -9, -6, -13, -1, -15, 4, -14, 8, -11)
@@ -20,10 +109,22 @@ polygon = PackedVector2Array(10, -6, 10, 0, 10, 6, 9, 10, 6, 13, 2, 15, -1, 15, 
 shape = SubResource("CapsuleShape2D_ibecc")
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+libraries = {
+"": SubResource("AnimationLibrary_jea5y")
+}
 
 [node name="Area2D" type="Area2D" parent="."]
-collision_mask = 3
+collision_layer = 4
+collision_mask = 8
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D"]
 position = Vector2(31.5, 0)
 shape = SubResource("RectangleShape2D_ftn34")
+
+[node name="HurtboxComponent" parent="." node_paths=PackedStringArray("knockback_component") instance=ExtResource("4_3mqb0")]
+knockback_component = NodePath("../KnockbackComponent")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="HurtboxComponent"]
+shape = SubResource("CapsuleShape2D_hkab7")
+
+[node name="KnockbackComponent" parent="." instance=ExtResource("5_2y1ww")]

@@ -115,17 +115,21 @@ func _input(event):
 	
 	if direction > 0 and not facing_right:
 		facing_right = true
-		scale = Vector2(-1,1)
+		scale.x = -1
+		$Sprite2D.flip_h = false
 	elif direction < 0 and facing_right:
 		facing_right = false
-		scale = Vector2(-1,1)
+		scale.x = -1
+		$Sprite2D.flip_h = true
 	
 	if Input.is_action_just_pressed("light_attack" + action_key):
-		print("Attack " + str(player_index))
-		for body in $Area2D.get_overlapping_bodies():
-			if body is CharacterBody2D and body != self:
-				body.velocity = Vector2(100 ,-1.0 * (body.upwards_gravity * body.time_to_peak))
-				print(body)
+		$AnimationPlayer.play("light_attack")
+		if can_cancel:
+			clear_blacklist()
+			can_cancel = false
+			$AnimationPlayer.stop()
+			$AnimationPlayer.play("light_attack")
+				#body.velocity = Vector2(100 ,-1.0 * (body.upwards_gravity * body.time_to_peak))
 	
 	#print("Device " + str(event.device) + " sent from " + action_key)
 
@@ -147,3 +151,22 @@ func get_friction():
 func can_jump():
 	if coyote_timer > 0:
 		return true
+
+@onready var blacklist : Array = [$HurtboxComponent]
+var can_cancel = false
+
+func active_frames():
+	for area in $Area2D.get_overlapping_areas():
+			if area is HurtboxComponent and !blacklist.has(area):
+				blacklist.append(area)
+				var char_body = area.get_parent()
+				var attack : Attack = Attack.new()
+				attack.attack_damage = 100.0
+				attack.knockback_force = char_body.upwards_gravity * char_body.time_to_peak
+				attack.knockback_direction = Vector2.UP
+				attack.stun_duration = 10
+				area.damage(attack)
+				can_cancel = true
+
+func clear_blacklist():
+	blacklist = [$HurtboxComponent]
