@@ -92,7 +92,6 @@ func _physics_process(delta):
 	#If the player is NOT holding left or right, slow them down by ACCELERATION/2
 	else:
 		velocity.x = move_toward(velocity.x, 0, get_acceleration()/2)
-	print(scale)
 	
 	move_and_slide()
 
@@ -115,11 +114,9 @@ func _input(event):
 	direction = Input.get_axis("move_left" + action_key, "move_right" + action_key)
 	
 	if direction > 0 and not facing_right:
-		print(" right")
 		facing_right = true
 		scale = Vector2(-1,1)
 	elif direction < 0 and facing_right:
-		print(" left")
 		facing_right = false
 		scale = Vector2(-1,1)
 	
